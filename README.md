@@ -108,7 +108,3 @@ This is the canonical shape of an employee document used across requests and res
   "joining_date": "2023-01-15",
   "skills": ["Python", "MongoDB", "APIs"]
 }
-
-[19](https://betterstack.com/community/guides/scaling-python/authentication-fastapi/)
-[20](https://app-generator.dev/docs/technologies/fastapi/security-best-practices.html)
-[21](https://notes.kodekloud.com/docs/Python-API-Development-with-FastAPI/Advanced-FastAPI/Creating-A-Token)
