@@ -1,112 +1,38 @@
 
 
+# Employees API (FastAPI + MongoDB)
+
+A high-performance REST API to manage employees with CRUD, department-filtered listing by newest joining date, skills search, and average salary aggregation, aligned with the assessment brief.[1]
+Security uses OAuth2 Password flow with Bearer JWT tokens for protected routes, following FastAPI’s recommended approach.[2][3]
+
 ## Features
 
-- **CRUD** operations for employees
-- **List employees by department** sorted by newest joining date
-- **Search employees by skills**
-- **Calculate average salary per department**
-- **JWT authentication** for protected routes
-- **Pagination support** for listings
-- **MongoDB JSON schema validation** and **unique indexes** for data integrity
+- CRUD operations for employees with 404 on missing records and uniqueness on employee_id.[1]
+- List employees by department sorted by newest joining_date via a query parameter.[1]
+- Search employees by skill from the skills array and compute average salary per department.[1]
+- JWT authentication for protected routes, pagination support, JSON schema validation, and unique indexes for integrity.[1]
 
----
-
-## Requirements
-
-- Python 3.10+
-- MongoDB (local)
-- Dependencies in `requirements.txt`:
-  - `fastapi`
-  - `uvicorn`
-  - `motor`
-  - `pydantic`
-  - `python-jose`
-  - `passlib`
-  - `pymongo`
-  - `python-multipart`
-
----
-
-## Setup
-
-1. **Clone the repository** or download the project.
-
-2. **Create and activate a virtual environment:**
-
-```bash
-python -m venv .venv
-# Linux/macOS
-source .venv/bin/activate
-# Windows
-.venv\Scripts\activate
-````
-
-3. **Install dependencies:**
-
-```bash
-pip install -r requirements.txt
-```
-
-4. **Ensure MongoDB is running locally** and accessible via `MONGO_URL`.
-
----
-
-## Environment Variables
-
-Create a `.env` file in the project root with:
-
-```env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=assessment_db
-COLLECTION_NAME=employees
-
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
----
 
 ## Running the API
 
-Start the server:
+Start the server using Uvicorn and open the interactive API docs at /docs after startup.[4]
+- Development example: uvicorn main:app --reload[4]
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Interactive API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-
----
-
 ## Authentication
 
-* Obtain a JWT token by POSTing `username` and `password` to:
+- Obtain a token by POSTing OAuth2 Password form fields username and password to the token endpoint.[5][2]
+- Send Authorization: Bearer <token> to access protected routes, as per FastAPI’s OAuth2PasswordBearer flow with JWT.[3][5]
 
-```
-POST /token
-```
+## API endpoints
 
-* Use the token in the `Authorization` header for protected routes:
-
-```
-Authorization: Bearer <token>
-```
-
-> Create, update, and delete routes are protected.
-
----
-
-## API Endpoints
-
-### 1. Create Employee (POST)
-
-**Endpoint:** `/employees`
-**Protected:** Yes
-
-**Request Body:**
-
+### 1) Create Employee (POST)
+- Endpoint: /employees (Protected)[1]
+- Inserts a new employee; ensure employee_id uniqueness per assessment requirements.[1]
+- Request body example:[1]
 ```json
 {
   "employee_id": "E123",
@@ -118,24 +44,9 @@ Authorization: Bearer <token>
 }
 ```
 
-**Response Example:**
-
-```json
-{
-  "message": "Employee created successfully",
-  "employee_id": "E123"
-}
-```
-
----
-
-### 2. Get Employee by ID (GET)
-
-**Endpoint:** `/employees/{employee_id}`
-**Protected:** No
-
-**Response Example:**
-
+### 2) Get Employee by ID (GET)
+- Endpoint: /employees/{employee_id} (Public)[1]
+- Returns employee details or 404 if not found.[1]
 ```json
 {
   "employee_id": "E123",
@@ -147,23 +58,9 @@ Authorization: Bearer <token>
 }
 ```
 
-**404 Example:**
-
-```json
-{
-  "detail": "Employee not found"
-}
-```
-
----
-
-### 3. Update Employee (PUT)
-
-**Endpoint:** `/employees/{employee_id}`
-**Protected:** Yes
-
-**Request Body:** *(partial fields allowed)*
-
+### 3) Update Employee (PUT)
+- Endpoint: /employees/{employee_id} (Protected)[1]
+- Partial updates are allowed; only provided fields are modified.[1]
 ```json
 {
   "salary": 80000,
@@ -171,133 +68,37 @@ Authorization: Bearer <token>
 }
 ```
 
-**Response Example:**
+### 4) Delete Employee (DELETE)
+- Endpoint: /employees/{employee_id} (Protected)[1]
+- Deletes the employee and returns a success or failure message.[1]
 
-```json
-{
-  "message": "Employee updated successfully",
-  "employee_id": "E123"
-}
+### 5) List Employees by Department (GET)
+- Endpoint: /employees (Public)[1]
+- Query params: department (required for filtering), skip, limit; results sorted by joining_date desc.[1]
+```http
+GET /employees?department=Engineering&skip=0&limit=5
 ```
 
----
-
-### 4. Delete Employee (DELETE)
-
-**Endpoint:** `/employees/{employee_id}`
-**Protected:** Yes
-
-**Response Example:**
-
-```json
-{
-  "message": "Employee deleted successfully",
-  "employee_id": "E123"
-}
-```
-
-**404 Example:**
-
-```json
-{
-  "detail": "Employee not found"
-}
-```
-
----
-
-### 5. List Employees by Department (GET)
-
-**Endpoint:** `/employees`
-**Query Parameters:**
-
-* `department` (required)
-* `skip` (optional, default 0)
-* `limit` (optional, default 10)
-
-**Example:** `/employees?department=Engineering&skip=0&limit=5`
-
-**Response Example:**
-
+### 6) Average Salary per Department (GET)
+- Endpoint: /employees/avg-salary (Public)[1]
+- Returns average salaries grouped by department as an array of objects.[1]
 ```json
 [
-  {
-    "employee_id": "E124",
-    "name": "Jane Smith",
-    "department": "Engineering",
-    "salary": 85000,
-    "joining_date": "2023-02-10",
-    "skills": ["Python", "APIs"]
-  },
-  {
-    "employee_id": "E123",
-    "name": "John Doe",
-    "department": "Engineering",
-    "salary": 75000,
-    "joining_date": "2023-01-15",
-    "skills": ["Python", "MongoDB", "APIs"]
-  }
+  { "department": "Engineering", "avg_salary": 80000 },
+  { "department": "HR", "avg_salary": 60000 }
 ]
 ```
 
----
-
-### 6. Average Salary per Department (GET)
-
-**Endpoint:** `/employees/avg-salary`
-**Protected:** No
-
-**Response Example:**
-
-```json
-[
-  {
-    "department": "Engineering",
-    "average_salary": 80000
-  },
-  {
-    "department": "HR",
-    "average_salary": 60000
-  }
-]
+### 7) Search Employees by Skill (GET)
+- Endpoint: /employees/search (Public)[1]
+- Query param: skill; returns employees whose skills include the provided value.[1]
+```http
+GET /employees/search?skill=Python
 ```
 
----
+## Sample document
 
-### 7. Search Employees by Skill (GET)
-
-**Endpoint:** `/employees/search`
-**Query Parameter:** `skill` (required)
-
-**Example:** `/employees/search?skill=Python`
-
-**Response Example:**
-
-```json
-[
-  {
-    "employee_id": "E123",
-    "name": "John Doe",
-    "department": "Engineering",
-    "salary": 75000,
-    "joining_date": "2023-01-15",
-    "skills": ["Python", "MongoDB", "APIs"]
-  },
-  {
-    "employee_id": "E124",
-    "name": "Jane Smith",
-    "department": "Engineering",
-    "salary": 85000,
-    "joining_date": "2023-02-10",
-    "skills": ["Python", "APIs"]
-  }
-]
-```
-
----
-
-## Sample Employee Document
-
+This is the canonical shape of an employee document used across requests and responses.[1]
 ```json
 {
   "employee_id": "E123",
@@ -307,7 +108,7 @@ Authorization: Bearer <token>
   "joining_date": "2023-01-15",
   "skills": ["Python", "MongoDB", "APIs"]
 }
-```
 
----
-
+[19](https://betterstack.com/community/guides/scaling-python/authentication-fastapi/)
+[20](https://app-generator.dev/docs/technologies/fastapi/security-best-practices.html)
+[21](https://notes.kodekloud.com/docs/Python-API-Development-with-FastAPI/Advanced-FastAPI/Creating-A-Token)
